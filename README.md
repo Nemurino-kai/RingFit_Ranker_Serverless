@@ -1,5 +1,5 @@
 # RingFit_Ranker_Serverless
-<h2>👷Now under construction ...</h2>
+## 👷Now under construction ...
 
 Twitter上の <b>#リングフィットアドベンチャー</b> の画像を収集し、順位を呟くbotです<br>
 https://twitter.com/RingFitRanker で運営中
@@ -28,7 +28,8 @@ https://twitter.com/RingFitRanker で運営中
 
 ## 開発者向けのメッセージ
 ### システム構成図(予定)
-![ring](https://user-images.githubusercontent.com/40136659/88424052-d7ee8180-ce27-11ea-8834-d50291ddbd0d.png)
+![Ring](https://user-images.githubusercontent.com/40136659/88746354-4feddc00-d187-11ea-8208-bb201e479839.png)
+
 
 ### 使用方法
 👷Now under construction ...
