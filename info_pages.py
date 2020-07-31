@@ -3,7 +3,7 @@ from flask import Flask, render_template,request
 from flask_bootstrap import Bootstrap
 from flask_paginate import Pagination, get_page_parameter
 import config
-import sqlite3
+import MySQLdb
 import datetime
 import pandas as pd
 
@@ -13,11 +13,15 @@ bootstrap = Bootstrap(app)
 # タイムゾーン指定
 JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
+# 外部に置くことで、lambdaで使いまわせるので、パフォーマンスが向上する。
+conn = MySQLdb.connect(
+    host='localhost', user=config.DATABASE_USER, passwd=config.DATABASE_PASS, db=config.DATABASE_NAME,
+    charset='utf8mb4')
+
 @app.route('/')
 def index():
 
     day = request.args.get('day')
-    conn = sqlite3.connect(config.DATABASE_NAME)
     cur = conn.cursor()
 
     now = datetime.datetime.now(JST)
@@ -32,8 +36,9 @@ def index():
 
     print(params)
 
+
     cur.execute("SELECT RANK() OVER(ORDER BY kcal DESC) AS ranking,user_name,kcal,tweeted_time "
-                "FROM (SELECT *, RANK() OVER(PARTITION BY user_screen_name ORDER BY kcal DESC, id) AS rnk FROM Exercise WHERE   date(datetime(time_stamp,'-4 hours'))==?) tmp "
+                "FROM (SELECT *, RANK() OVER(PARTITION BY user_screen_name ORDER BY kcal DESC, id) AS rnk FROM Exercise WHERE CAST(tweeted_time - INTERVAL 4 HOUR AS DATE)=CAST(%s AS DATE)) tmp "
                 "WHERE rnk = 1 ORDER BY kcal DESC, tweeted_time ASC;",params)
 
     exercise_data_list = cur.fetchall()
@@ -52,14 +57,13 @@ def about():
 @app.route('/user')
 def user():
     user = request.args.get('user')
-    conn = sqlite3.connect(config.DATABASE_NAME)
     cur = conn.cursor()
     if user is None: user = ""
     params=(user,)
 
-    cur.execute("WITH NonOverlapTable AS (SELECT *, RANK() OVER(PARTITION BY user_screen_name, date(datetime(time_stamp,'-4 hours')) ORDER BY kcal DESC, id) AS rnk FROM Exercise)"
-                ",DailyRankedTable AS (SELECT *,RANK() OVER(PARTITION BY date(datetime(time_stamp,'-4 hours')) ORDER BY kcal DESC) AS daily_rank FROM NonOverlapTable WHERE rnk = 1)"
-                "SELECT daily_rank,kcal,tweeted_time, strftime('%w', datetime(time_stamp,'-4 hours')) AS weeknumber FROM DailyRankedTable WHERE rnk = 1 AND user_screen_name==? ORDER BY tweeted_time DESC;",params)
+    cur.execute("WITH NonOverlapTable AS (SELECT *, RANK() OVER(PARTITION BY user_screen_name, CAST(tweeted_time - INTERVAL 4 HOUR AS DATE) ORDER BY kcal DESC, id) AS rnk FROM Exercise)"
+                ",DailyRankedTable AS (SELECT *,RANK() OVER(PARTITION BY CAST(tweeted_time - INTERVAL 4 HOUR AS DATE) ORDER BY kcal DESC) AS daily_rank FROM NonOverlapTable WHERE rnk = 1)"
+                "SELECT daily_rank,kcal,tweeted_time, WEEKDAY(tweeted_time - INTERVAL 4 HOUR) AS weeknumber FROM DailyRankedTable WHERE rnk = 1 AND user_screen_name =%s ORDER BY tweeted_time DESC;",params)
 
     exercise_data_list = cur.fetchall()
 
@@ -73,7 +77,6 @@ def user():
 @app.route('/analytics')
 def analytics():
     day = request.args.get('day')
-    conn = sqlite3.connect(config.DATABASE_NAME)
     cur = conn.cursor()
 
     if datetime.datetime.now(JST).hour < 4:
@@ -103,8 +106,8 @@ def analytics():
         params = (start_t, stop_t)
 
     print(params)
-    cur.execute("select time_stamp from Exercise "
-                "WHERE time_stamp BETWEEN ? AND ? ORDER BY time_stamp DESC ;",params
+    cur.execute("select tweeted_time from Exercise "
+                "WHERE tweeted_time BETWEEN %s AND %s ORDER BY tweeted_time DESC ;",params
     )
 
 
