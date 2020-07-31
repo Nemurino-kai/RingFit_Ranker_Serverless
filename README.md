@@ -46,6 +46,9 @@ FROM_ADDR = '障害発生時の報告メール送信元'
 MAIL_PASS = 'Googleのアプリパスワード'
 TWITTER_ID = "RingFitRanker(呟くアカウントのTwitter_ID)"
 DATABASE_NAME = "運動記録を保存するデータベースの名前"
+DATABASE_HOST = "データベースのホスト名"
+DATABASE_PASS = "データベースのパスワード"
+DATABASE_USER = "データベースのユーザ名"
 RANKING_FONT = "ランキング画像のユーザ名に用いるフォント"
 KCAL_FONT = "ランキング画像の消費カロリーに用いるフォント"
 ```
