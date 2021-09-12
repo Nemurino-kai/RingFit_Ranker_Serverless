@@ -1,4 +1,4 @@
-# RingFit_Ranker_Serverless
+# RingFit_Ranker_Serverless (開発凍結中)
 ## 👷Now under construction ...
 
 Twitter上の <b>#リングフィットアドベンチャー</b> の画像を収集し、順位を呟くbotです<br>
